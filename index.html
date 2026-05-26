@@ -4765,21 +4765,57 @@ document.getElementById('btn-festa-back').onclick = () => {
   goMenu();
 };
 
-document.getElementById('btn-festa-create').onclick = () => {
+document.getElementById('btn-festa-create').onclick = async () => {
+  const btn = document.getElementById('btn-festa-create');
+  const errEl = document.getElementById('festa-join-error');
+
+  btn.style.opacity = '0.5';
+  btn.style.pointerEvents = 'none';
+  errEl.style.color = '#ffaa00';
+  errEl.textContent = '\u23F3 Acordando servidor... pode levar at\u00e9 30s!';
+
+  // Ping HTTP para acordar o Render antes de tentar o WebSocket
+  const httpUrl = festaGetServerURL().replace('wss://', 'https://').replace('ws://', 'http://');
+  try { await fetch(httpUrl + '/ping', { method: 'GET', mode: 'no-cors' }); } catch(e) {}
+
+  // Aguarda o servidor inicializar
+  await new Promise(r => setTimeout(r, 3000));
+
+  errEl.textContent = '\uD83D\uDD0C Conectando...';
+  btn.style.opacity = '1';
+  btn.style.pointerEvents = 'auto';
+
   festaConnect(() => {
-    festaSend({ type:'create_room' });
+    errEl.textContent = '';
+    festaSend({ type: 'create_room' });
   });
 };
 
-document.getElementById('btn-festa-join').onclick = () => {
+document.getElementById('btn-festa-join').onclick = async () => {
   const code = document.getElementById('festa-code-input').value.trim().toLowerCase();
+  const errEl = document.getElementById('festa-join-error');
+
   if (code.length !== 6) {
-    document.getElementById('festa-join-error').textContent = 'Código inválido (6 caracteres)!';
+    errEl.textContent = 'C\u00f3digo inv\u00e1lido (6 caracteres)!';
     return;
   }
-  document.getElementById('festa-join-error').textContent = '';
+
+  errEl.style.color = '#ffaa00';
+  errEl.textContent = '\u23F3 Acordando servidor... pode levar at\u00e9 30s!';
+
+  // Ping HTTP para acordar o Render antes de tentar o WebSocket
+  const httpUrl = festaGetServerURL().replace('wss://', 'https://').replace('ws://', 'http://');
+  try { await fetch(httpUrl + '/ping', { method: 'GET', mode: 'no-cors' }); } catch(e) {}
+
+  // Aguarda o servidor inicializar
+  await new Promise(r => setTimeout(r, 3000));
+
+  errEl.style.color = '';
+  errEl.textContent = '\uD83D\uDD0C Conectando...';
+
   festaConnect(() => {
-    festaSend({ type:'join_room', code });
+    errEl.textContent = '';
+    festaSend({ type: 'join_room', code });
   });
 };
 
